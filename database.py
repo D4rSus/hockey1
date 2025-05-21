@@ -31,9 +31,11 @@ def init_db():
     """Инициализация базы данных"""
     # Импортируем модели для создания таблиц
     from models import User, Player, Team, Training, Match, PlayerStats, TeamStats, Attendance
+    from models import TrainingExercise, Tournament, TournamentTeam, Video
     
-    # Создаем директорию для базы данных, если она не существует
-    os.makedirs(os.path.dirname(os.path.abspath(Config.DB_PATH)), exist_ok=True)
+    # Создаем директории для медиа-файлов
+    for directory in [Config.MEDIA_DIR, Config.VIDEO_DIR, Config.PHOTOS_DIR, Config.EXPORTS_DIR]:
+        os.makedirs(directory, exist_ok=True)
     
     # Создаем таблицы
     Base.metadata.create_all(engine)
@@ -41,17 +43,22 @@ def init_db():
     # Создаем сессию
     session = get_session()
     
-    # Проверяем, есть ли пользователи, и если нет, создаем администратора
-    user_count = session.query(User).count()
-    if user_count == 0:
-        admin = User(
-            username="admin",
-            full_name="Администратор",
-            is_admin=True
-        )
-        admin.set_password("admin")
-        session.add(admin)
-        session.commit()
-    
-    # Закрываем сессию
-    session.close()
+    try:
+        # Проверяем, есть ли пользователи, и если нет, создаем администратора
+        user_count = session.query(User).count()
+        if user_count == 0:
+            admin = User(
+                username="admin",
+                full_name="Администратор",
+                is_admin=True
+            )
+            admin.set_password("admin")
+            session.add(admin)
+            session.commit()
+            print("Создан пользователь администратор (admin/admin)")
+    except Exception as e:
+        print(f"Ошибка при инициализации базы данных: {str(e)}")
+        session.rollback()
+    finally:
+        # Закрываем сессию
+        session.close()

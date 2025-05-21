@@ -20,6 +20,14 @@ args = "Hockey Coach App"
 task = "workflow.run"
 args = "run_desktop_app"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Console Hockey Coach App"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Simple Hockey Coach App"
+
 [[workflows.workflow]]
 name = "Hockey Coach App"
 author = "agent"
@@ -36,6 +44,22 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python main.py"
+
+[[workflows.workflow]]
+name = "Console Hockey Coach App"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python console_app.py"
+
+[[workflows.workflow]]
+name = "Simple Hockey Coach App"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python simple_app.py"
 
 [deployment]
 run = ["sh", "-c", "pip install PyQt5 SQLAlchemy matplotlib pandas numpy werkzeug && python main.py"]

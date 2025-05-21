@@ -7,6 +7,9 @@
 
 import sys
 import os
+# Указываем Qt использовать Offscreen платформу для работы в среде Replit
+os.environ["QT_QPA_PLATFORM"] = "offscreen"
+
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QTranslator, QLocale
 from PyQt5.QtGui import QIcon, QFont

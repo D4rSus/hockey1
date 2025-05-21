@@ -9,7 +9,7 @@ import shutil
 from sqlalchemy import or_
 
 from database import get_session
-from models import Player, Team, Video
+from models import Player, Team, Video, Match
 from config import Config
 from utils import get_player_photo_path, get_unique_filename
 

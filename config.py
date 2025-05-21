@@ -16,8 +16,9 @@ class Config:
     VERSION = "1.0.0"
     
     # Настройки базы данных
-    DB_PATH = "hockey_coach.db"
-    DB_URI = f"sqlite:///{DB_PATH}"
+    DB_PATH = "hockey_coach.db"  # Оставляем для совместимости
+    # Используем PostgreSQL вместо SQLite
+    DB_URI = os.environ.get('DATABASE_URL', f"sqlite:///{DB_PATH}")
     
     # Пути к директориям
     BASE_DIR = Path(__file__).parent

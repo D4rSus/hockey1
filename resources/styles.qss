@@ -1,0 +1,251 @@
+/* Основной стиль приложения */
+
+/* Главное окно */
+QMainWindow {
+    background-color: #f5f5f5;
+}
+
+/* Заголовки */
+QLabel[heading="true"] {
+    font-size: 18px;
+    font-weight: bold;
+    color: #2c3e50;
+    padding: 5px;
+}
+
+/* Обычные метки */
+QLabel {
+    color: #34495e;
+}
+
+/* Кнопки */
+QPushButton {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+QPushButton:hover {
+    background-color: #2980b9;
+}
+
+QPushButton:pressed {
+    background-color: #1f618d;
+}
+
+QPushButton:disabled {
+    background-color: #bdc3c7;
+}
+
+/* Кнопки действий (добавить, удалить и т.д.) */
+QPushButton[action="true"] {
+    padding: 6px 12px;
+}
+
+QPushButton[action="add"] {
+    background-color: #2ecc71;
+}
+
+QPushButton[action="add"]:hover {
+    background-color: #27ae60;
+}
+
+QPushButton[action="delete"] {
+    background-color: #e74c3c;
+}
+
+QPushButton[action="delete"]:hover {
+    background-color: #c0392b;
+}
+
+/* Поля ввода */
+QLineEdit, QTextEdit, QComboBox, QSpinBox, QDateEdit, QTimeEdit {
+    border: 1px solid #bdc3c7;
+    padding: 5px;
+    border-radius: 3px;
+    background-color: white;
+    color: #2c3e50;
+}
+
+QLineEdit:focus, QTextEdit:focus, QComboBox:focus, QSpinBox:focus, QDateEdit:focus, QTimeEdit:focus {
+    border: 1px solid #3498db;
+}
+
+/* Выпадающие списки */
+QComboBox {
+    min-height: 25px;
+}
+
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 15px;
+    border-left-width: 1px;
+    border-left-color: #bdc3c7;
+    border-left-style: solid;
+}
+
+/* Таблицы */
+QTableView, QTreeView, QListView {
+    background-color: white;
+    alternate-background-color: #ecf0f1;
+    selection-background-color: #3498db;
+    selection-color: white;
+    border: 1px solid #bdc3c7;
+}
+
+QTableView::item, QTreeView::item, QListView::item {
+    padding: 5px;
+}
+
+QHeaderView::section {
+    background-color: #34495e;
+    color: white;
+    padding: 5px;
+    border: none;
+}
+
+/* Вкладки */
+QTabWidget::pane {
+    border: 1px solid #bdc3c7;
+    background-color: white;
+    border-radius: 3px;
+}
+
+QTabBar::tab {
+    background-color: #ecf0f1;
+    color: #34495e;
+    padding: 8px 12px;
+    margin-right: 2px;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+}
+
+QTabBar::tab:selected {
+    background-color: white;
+    border: 1px solid #bdc3c7;
+    border-bottom: none;
+}
+
+QTabBar::tab:hover:!selected {
+    background-color: #d6dbdf;
+}
+
+/* Группы */
+QGroupBox {
+    border: 1px solid #bdc3c7;
+    border-radius: 5px;
+    margin-top: 20px;
+    font-weight: bold;
+    color: #34495e;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    left: 10px;
+    padding: 0 5px 0 5px;
+}
+
+/* Прогресс-бар */
+QProgressBar {
+    border: 1px solid #bdc3c7;
+    border-radius: 3px;
+    background-color: #ecf0f1;
+    text-align: center;
+}
+
+QProgressBar::chunk {
+    background-color: #3498db;
+}
+
+/* Scrollbars */
+QScrollBar:vertical {
+    border: none;
+    background-color: #f5f5f5;
+    width: 12px;
+    margin: 0px;
+}
+
+QScrollBar::handle:vertical {
+    background-color: #bdc3c7;
+    min-height: 30px;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background-color: #95a5a6;
+}
+
+QScrollBar:horizontal {
+    border: none;
+    background-color: #f5f5f5;
+    height: 12px;
+    margin: 0px;
+}
+
+QScrollBar::handle:horizontal {
+    background-color: #bdc3c7;
+    min-width: 30px;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background-color: #95a5a6;
+}
+
+/* Убираем кнопки */
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical,
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+    border: none;
+    background: none;
+}
+
+/* Формы авторизации */
+#loginForm, #registerForm {
+    background-color: white;
+    border-radius: 5px;
+    padding: 20px;
+}
+
+#loginTitle, #registerTitle {
+    font-size: 24px;
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 20px;
+}
+
+/* Карточка игрока */
+#playerCard {
+    background-color: white;
+    border-radius: 5px;
+    padding: 15px;
+}
+
+#playerName {
+    font-size: 20px;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+#playerPosition {
+    font-size: 14px;
+    color: #7f8c8d;
+}
+
+/* Специальные элементы */
+#statsValue {
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+#positiveValue {
+    color: #27ae60;
+}
+
+#negativeValue {
+    color: #c0392b;
+}
