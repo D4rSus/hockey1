@@ -75,10 +75,42 @@ def qtime_to_time(qtime):
 
 def export_to_excel(data, filename, sheet_name='Данные'):
     """Экспорт данных в Excel файл"""
-    full_path = os.path.join(Config.EXPORTS_DIR, filename)
-    df = pd.DataFrame(data)
-    df.to_excel(full_path, sheet_name=sheet_name, index=False)
-    return full_path
+    try:
+        # Убедимся, что директория существует
+        os.makedirs(Config.EXPORTS_DIR, exist_ok=True)
+        
+        full_path = os.path.join(Config.EXPORTS_DIR, filename)
+        df = pd.DataFrame(data)
+        df.to_excel(full_path, sheet_name=sheet_name, index=False)
+        print(f"Данные успешно экспортированы в файл: {full_path}")
+        return full_path
+    except Exception as e:
+        print(f"Ошибка при экспорте данных в Excel: {str(e)}")
+        return None
+        
+def import_from_excel(filename, sheet_name=0):
+    """Импорт данных из Excel файла
+    
+    Args:
+        filename (str): Путь к файлу Excel
+        sheet_name (str or int): Имя или индекс листа для импорта
+        
+    Returns:
+        list: Список словарей с данными из файла
+    """
+    try:
+        if not os.path.exists(filename):
+            print(f"Файл не найден: {filename}")
+            return []
+            
+        df = pd.read_excel(filename, sheet_name=sheet_name)
+        # Преобразование DataFrame в список словарей
+        records = df.to_dict('records')
+        print(f"Импортировано {len(records)} записей из файла {filename}")
+        return records
+    except Exception as e:
+        print(f"Ошибка при импорте данных из Excel: {str(e)}")
+        return []
 
 def generate_chart(data, chart_type='bar', title='График', xlabel='X', ylabel='Y'):
     """Генерация графика с помощью matplotlib"""

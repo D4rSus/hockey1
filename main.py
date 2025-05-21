@@ -1,14 +1,9 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-"""
-Главный модуль приложения "Рабочее место тренера хоккейной команды"
-"""
-
 import sys
 import os
+
+from ui.team_roster import TeamRosterWidget
 # Указываем Qt использовать Offscreen платформу для работы в среде Replit
-os.environ["QT_QPA_PLATFORM"] = "offscreen"
+os.environ["QT_QPA_PLATFORM"] = "windows"
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QTranslator, QLocale
@@ -20,52 +15,59 @@ from ui.auth import LoginWindow
 from ui.main_window import MainWindow
 from services.auth_service import AuthService
 
+
+
+def init_ui(self):
+    self.setup_main_widgets()  # Сначала создаем все виджеты
+    self.create_menu()        # Затем создаем меню
+    self.setup_layout()       # Настраиваем компоновку
+
+def setup_main_widgets(self):
+    """Инициализация всех виджетов главного окна"""
+    self.team_roster_widget = TeamRosterWidget(self.user)
+
 def setup_app():
     """Настройка приложения"""
     # Создаем приложение
     app = QApplication(sys.argv)
-    
+
     # Устанавливаем имя приложения
     app.setApplicationName("Рабочее место тренера хоккейной команды")
-    
+
     # Загрузка стилей
     with open("resources/styles.qss", "r", encoding="utf-8") as file:
         app.setStyleSheet(file.read())
-    
+
     # Настройка шрифтов
     font = QFont("Segoe UI", 10)
     app.setFont(font)
-    
+
     return app
 
 def main():
-    """Основная функция приложения"""
-    # Инициализация базы данных
+    app = QApplication(sys.argv)
+
+    # Инициализация
     init_db()
-    
-    # Настройка приложения
-    app = setup_app()
-    
-    # Инициализация сервиса авторизации
     auth_service = AuthService()
-    
-    # Создание окна авторизации
     login_window = LoginWindow(auth_service)
-    
-    # Обработка входа пользователя
+
+    # Храним ссылку на главное окно
+    main_window = None
+
     def on_login_success(user):
-        """Обработчик успешной авторизации"""
-        main_window = MainWindow(user)
-        login_window.close()
-        main_window.showMaximized()
-    
-    # Подключение сигнала успешной авторизации
+        nonlocal main_window
+        try:
+            main_window = MainWindow(user)
+            login_window.close()
+            main_window.show()
+        except Exception as e:
+            QMessageBox.critical(None, "Ошибка", f"Ошибка: {str(e)}")
+            sys.exit(1)
+
     login_window.login_success.connect(on_login_success)
-    
-    # Отображение окна авторизации
     login_window.show()
-    
-    # Запуск цикла событий
+
     sys.exit(app.exec_())
 
 if __name__ == "__main__":

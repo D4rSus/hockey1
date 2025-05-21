@@ -232,16 +232,25 @@ class StatsService:
                 is_home = match.home_team_id == team_id
                 is_away = match.away_team_id == team_id
                 
-                if is_home and match.home_score is not None and match.away_score is not None:
-                    if int(match.home_score) > int(match.away_score):
-                        wins += 1
-                    else:
-                        losses += 1
-                elif is_away and match.home_score is not None and match.away_score is not None:
-                    if int(match.away_score) > int(match.home_score):
-                        wins += 1
-                    else:
-                        losses += 1
+                # Преобразуем объекты SQLAlchemy в обычные Python-объекты для сравнения
+                home_score = match.home_score
+                away_score = match.away_score
+                
+                if home_score is not None and away_score is not None:
+                    # Преобразуем к int, но предварительно обеспечиваем, что это не SQLAlchemy-объекты
+                    home_score_val = int(home_score) if home_score is not None else 0
+                    away_score_val = int(away_score) if away_score is not None else 0
+                    
+                    if is_home:
+                        if home_score_val > away_score_val:
+                            wins += 1
+                        else:
+                            losses += 1
+                    elif is_away:
+                        if away_score_val > home_score_val:
+                            wins += 1
+                        else:
+                            losses += 1
             
             games = wins + losses
             win_percentage = (wins / games * 100) if games > 0 else 0

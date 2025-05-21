@@ -227,43 +227,62 @@ class PlayerCardWidget(QWidget):
             self.set_default_message()
             return
         
-        self.player = player
-        
-        # Основная информация
-        self.player_name_label.setText(player.full_name)
-        self.birth_date_label.setText(format_date(player.birth_date) if player.birth_date else "Не указана")
-        self.age_label.setText(str(player.age) if player.age else "Неизвестно")
-        self.position_label.setText(player.position)
-        self.team_label.setText(player.team.name if player.team else "Не указана")
-        self.jersey_number_label.setText(str(player.jersey_number) if player.jersey_number else "Нет")
-        self.height_label.setText(f"{player.height} см" if player.height else "Не указан")
-        self.weight_label.setText(f"{player.weight} кг" if player.weight else "Не указан")
-        
-        # Загрузка фото
-        if player.photo_path:
-            pixmap = QPixmap(player.photo_path)
-            if not pixmap.isNull():
-                pixmap = pixmap.scaled(200, 200, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-                self.photo_label.setPixmap(pixmap)
-                self.photo_label.setText("")
+        try:
+            # Загружаем обновленную информацию об игроке из базы данных
+            player_id = player.id if hasattr(player, 'id') else player
+            player = self.player_service.get_player_by_id(player_id)
+            
+            if not player:
+                self.set_default_message()
+                show_error_message(self, "Ошибка", "Не удалось загрузить данные игрока")
+                return
+            
+            self.player = player
+            
+            # Основная информация
+            full_name = f"{player.last_name} {player.first_name}"
+            if player.middle_name:
+                full_name += f" {player.middle_name}"
+            self.player_name_label.setText(full_name)
+            
+            self.birth_date_label.setText(format_date(player.birth_date) if player.birth_date else "Не указана")
+            self.age_label.setText(str(player.age()) if player.birth_date else "Неизвестно")
+            self.position_label.setText(player.position)
+            self.team_label.setText(player.team.name if player.team else "Не указана")
+            self.jersey_number_label.setText(str(player.jersey_number) if player.jersey_number else "Нет")
+            self.height_label.setText(f"{player.height} см" if player.height else "Не указан")
+            self.weight_label.setText(f"{player.weight} кг" if player.weight else "Не указан")
+            
+            # Загрузка фото
+            if player.photo_path:
+                pixmap = QPixmap(player.photo_path)
+                if not pixmap.isNull():
+                    pixmap = pixmap.scaled(200, 200, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                    self.photo_label.setPixmap(pixmap)
+                    self.photo_label.setText("")
+                else:
+                    self.photo_label.setText("Ошибка загрузки фото")
+                    self.photo_label.setPixmap(QPixmap())
             else:
-                self.photo_label.setText("Ошибка загрузки фото")
+                self.photo_label.setText("Нет фото")
                 self.photo_label.setPixmap(QPixmap())
-        else:
-            self.photo_label.setText("Нет фото")
-            self.photo_label.setPixmap(QPixmap())
-        
-        # Загрузка статистики сезона
-        self.load_season_stats()
-        
-        # Загрузка статистики по матчам
-        self.load_match_stats()
-        
-        # Загрузка видеоматериалов
-        self.load_videos()
-        
-        # Загрузка заметок
-        self.notes_label.setText(player.notes if player.notes else "Нет заметок")
+            
+            # Загрузка статистики сезона
+            self.load_season_stats()
+            
+            # Загрузка статистики по матчам
+            self.load_match_stats()
+            
+            # Загрузка видеоматериалов
+            self.load_videos()
+            
+            # Загрузка заметок
+            self.notes_label.setText(player.notes if player.notes else "Нет заметок")
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            show_error_message(self, "Ошибка", f"Ошибка при загрузке данных игрока: {str(e)}")
+            self.set_default_message()
     
     def load_season_stats(self):
         """Загрузка статистики сезона"""
