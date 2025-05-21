@@ -82,7 +82,7 @@ class StatsService:
             
             # Дополнительные расчеты
             stats['points'] = int(stats['goals'] + stats['assists'])
-            stats['faceoff_percentage'] = float((stats['faceoffs_won'] / stats['faceoffs_total'] * 100) if stats['faceoffs_total'] > 0 else 0)
+            stats['faceoff_percentage'] = int((stats['faceoffs_won'] / stats['faceoffs_total'] * 100) if stats['faceoffs_total'] > 0 else 0)
             stats['games'] = self.session.query(func.count(PlayerStats.id)).filter(PlayerStats.player_id == player_id).scalar() or 0
             
             return stats
@@ -167,7 +167,7 @@ class StatsService:
                 }
             
             # Дополнительные расчеты
-            stats['powerplay_percentage'] = float((stats['powerplay_goals'] / stats['powerplay_opportunities'] * 100) if stats['powerplay_opportunities'] > 0 else 0)
+            stats['powerplay_percentage'] = int((stats['powerplay_goals'] / stats['powerplay_opportunities'] * 100) if stats['powerplay_opportunities'] > 0 else 0)
             stats['games'] = self.get_team_games_count(team_id, start_date, end_date)
             
             # Добавление статистики побед/поражений
@@ -228,13 +228,17 @@ class StatsService:
             losses = 0
             
             for match in matches:
-                if match.home_team_id == team_id:
-                    if match.home_score > match.away_score:
+                # Сравниваем результаты, используя SQLAlchemy-безопасный способ
+                is_home = match.home_team_id == team_id
+                is_away = match.away_team_id == team_id
+                
+                if is_home and match.home_score is not None and match.away_score is not None:
+                    if int(match.home_score) > int(match.away_score):
                         wins += 1
                     else:
                         losses += 1
-                else:  # away_team_id == team_id
-                    if match.away_score > match.home_score:
+                elif is_away and match.home_score is not None and match.away_score is not None:
+                    if int(match.away_score) > int(match.home_score):
                         wins += 1
                     else:
                         losses += 1
