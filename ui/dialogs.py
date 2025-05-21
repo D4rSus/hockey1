@@ -930,3 +930,130 @@ class AddTeamToTournamentDialog(QDialog):
         except Exception as e:
             show_error_message(self, "Ошибка", f"Не удалось добавить команду в турнир: {str(e)}")
 
+
+class TeamDialog(QDialog):
+    """Диалог для добавления/редактирования команды"""
+    
+    def __init__(self, team=None, create_mode="full", parent=None):
+        super().__init__(parent)
+        
+        self.team = team
+        self.create_mode = create_mode  # "quick" - только название, "basic" - базовые поля, "full" - все поля
+        self.team_service = TeamService()
+        
+        self.init_ui()
+        
+        if team:
+            self.setWindowTitle("Редактирование команды")
+            self.load_team_data()
+        else:
+            if self.create_mode == "quick":
+                self.setWindowTitle("Быстрое создание команды")
+            elif self.create_mode == "basic":
+                self.setWindowTitle("Создание команды (базовые параметры)")
+            else:
+                self.setWindowTitle("Полное создание команды")
+    
+    def init_ui(self):
+        """Инициализация интерфейса"""
+        layout = QFormLayout(self)
+        
+        # Название команды (есть во всех режимах)
+        self.name_edit = QLineEdit()
+        layout.addRow("Название команды:", self.name_edit)
+        
+        # Базовые поля (для режимов basic и full)
+        if self.create_mode in ["basic", "full"]:
+            # Год основания
+            self.foundation_year_spin = QSpinBox()
+            self.foundation_year_spin.setMinimum(1900)
+            self.foundation_year_spin.setMaximum(2100)
+            self.foundation_year_spin.setValue(2023)
+            layout.addRow("Год основания:", self.foundation_year_spin)
+            
+            # Описание
+            self.description_edit = QTextEdit()
+            layout.addRow("Описание команды:", self.description_edit)
+        
+        # Полные поля (только для режима full)
+        if self.create_mode == "full":
+            # Домашняя арена
+            self.home_arena_edit = QLineEdit()
+            layout.addRow("Домашняя арена:", self.home_arena_edit)
+            
+            # Признак команды-соперника
+            self.is_opponent_check = QCheckBox("Команда-соперник")
+            layout.addRow("", self.is_opponent_check)
+        
+        # Кнопки
+        button_box = QDialogButtonBox(
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+        )
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+        layout.addRow(button_box)
+        
+        self.setMinimumWidth(350)
+    
+    def load_team_data(self):
+        """Загрузка данных команды"""
+        if not self.team:
+            return
+        
+        self.name_edit.setText(self.team.name)
+        
+        if self.create_mode in ["basic", "full"]:
+            if self.team.foundation_year:
+                self.foundation_year_spin.setValue(self.team.foundation_year)
+            
+            if self.team.description:
+                self.description_edit.setText(self.team.description)
+        
+        if self.create_mode == "full":
+            if self.team.home_arena:
+                self.home_arena_edit.setText(self.team.home_arena)
+            
+            self.is_opponent_check.setChecked(self.team.is_opponent)
+    
+    def get_team_data(self):
+        """Получение данных команды из полей формы"""
+        team_data = {
+            'name': self.name_edit.text().strip(),
+            'is_opponent': False  # По умолчанию не соперник
+        }
+        
+        if self.create_mode in ["basic", "full"]:
+            team_data.update({
+                'foundation_year': self.foundation_year_spin.value(),
+                'description': self.description_edit.toPlainText().strip() or None
+            })
+        
+        if self.create_mode == "full":
+            team_data.update({
+                'home_arena': self.home_arena_edit.text().strip() or None,
+                'is_opponent': self.is_opponent_check.isChecked()
+            })
+        
+        return team_data
+    
+    def accept(self):
+        """Обработка нажатия кнопки OK"""
+        team_data = self.get_team_data()
+        
+        # Проверка обязательных полей
+        if not team_data['name']:
+            show_error_message(self, "Ошибка", "Название команды обязательно для заполнения")
+            return
+        
+        try:
+            if self.team:
+                # Обновление команды
+                self.team_service.update_team(self.team.id, team_data)
+            else:
+                # Создание новой команды
+                self.team_service.create_team(team_data)
+            
+            super().accept()
+        except Exception as e:
+            show_error_message(self, "Ошибка", f"Не удалось сохранить данные команды: {str(e)}")
+

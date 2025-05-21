@@ -238,7 +238,48 @@ def teams_menu():
         
         elif choice == '3':
             print_header("Добавление новой команды")
+            print("Выберите тип создания:")
+            creation_options = {
+                '1': 'Быстрое создание (только название)',
+                '2': 'Полное создание (все данные)',
+                '0': 'Отмена'
+            }
+            print_menu(creation_options)
+            creation_choice = get_menu_choice(creation_options)
             
+            if creation_choice == '0':
+                continue
+                
+            if creation_choice == '1':
+                # Быстрое создание с указанием только названия
+                name = input("Название команды: ")
+                if not name:
+                    print("Название команды обязательно для заполнения.")
+                    input("Нажмите Enter для продолжения...")
+                    continue
+                
+                # Создаем команду с минимальными данными
+                team_data = {
+                    'name': name,
+                    'is_opponent': False  # По умолчанию не соперник
+                }
+                
+                team = team_service.create_team(team_data)
+                
+                if team:
+                    print(f"\nКоманда '{name}' успешно создана!")
+                    
+                    # Предложение добавить игроков в команду
+                    add_players = input("\nХотите добавить игроков в команду? (да/нет): ").lower()
+                    if add_players in ['да', 'д', 'yes', 'y', '1']:
+                        add_players_to_team(team.id)
+                else:
+                    print("\nНе удалось создать команду. Проверьте введенные данные.")
+                
+                input("Нажмите Enter для продолжения...")
+                continue
+                
+            # Полное создание команды
             name = input("Название команды: ")
             if not name:
                 print("Название команды обязательно для заполнения.")

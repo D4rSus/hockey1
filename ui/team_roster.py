@@ -16,6 +16,7 @@ from services.player_service import PlayerService
 from services.team_service import TeamService
 from utils import (show_error_message, show_info_message, show_question_message, 
                   format_date, export_to_excel, get_player_photo_path)
+from ui.dialogs import TeamDialog
 from database import get_session
 
 class PlayerDialog(QDialog):
@@ -263,7 +264,20 @@ class TeamRosterWidget(QWidget):
         
         filter_layout.addStretch()
         
-        # Кнопки действий
+        # Кнопки действий с командами
+        add_team_button = QPushButton("Добавить команду")
+        add_team_button.clicked.connect(self.add_team)
+        filter_layout.addWidget(add_team_button)
+        
+        basic_team_button = QPushButton("Базовое создание команды")
+        basic_team_button.clicked.connect(self.basic_add_team)
+        filter_layout.addWidget(basic_team_button)
+        
+        quick_team_button = QPushButton("Быстрое создание команды")
+        quick_team_button.clicked.connect(self.quick_add_team)
+        filter_layout.addWidget(quick_team_button)
+        
+        # Кнопки действий с игроками
         add_button = QPushButton("Добавить игрока")
         add_button.clicked.connect(self.add_player)
         filter_layout.addWidget(add_button)
@@ -394,6 +408,36 @@ class TeamRosterWidget(QWidget):
             show_info_message(self, "Информация", "Игрок успешно удален")
         except Exception as e:
             show_error_message(self, "Ошибка", f"Не удалось удалить игрока: {str(e)}")
+    
+    def add_team(self):
+        """Добавление новой команды (полная форма)"""
+        dialog = TeamDialog(create_mode="full", parent=self)
+        result = dialog.exec_()
+        
+        if result == QDialog.Accepted:
+            self.load_teams()
+            self.load_players()
+            show_info_message(self, "Информация", "Команда успешно добавлена")
+    
+    def basic_add_team(self):
+        """Базовое добавление команды (название, год основания, описание)"""
+        dialog = TeamDialog(create_mode="basic", parent=self)
+        result = dialog.exec_()
+        
+        if result == QDialog.Accepted:
+            self.load_teams()
+            self.load_players()
+            show_info_message(self, "Информация", "Команда успешно добавлена")
+    
+    def quick_add_team(self):
+        """Быстрое добавление команды (только название)"""
+        dialog = TeamDialog(create_mode="quick", parent=self)
+        result = dialog.exec_()
+        
+        if result == QDialog.Accepted:
+            self.load_teams()
+            self.load_players()
+            show_info_message(self, "Информация", "Команда успешно добавлена")
     
     def on_player_selected(self):
         """Обработчик выбора игрока в таблице"""
