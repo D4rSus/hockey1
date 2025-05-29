@@ -167,7 +167,7 @@ class TeamStatsWidget(QWidget):
             return
         
         # Загрузка основных показателей
-        team_stats = self.stats_service.get_team_summary_stats(team_id)
+        team_stats = self.stats_service.get_team_stats(team_id)
         
         self.games_label.setText(str(team_stats.get('games', 0)))
         self.wins_label.setText(str(team_stats.get('wins', 0)))

@@ -14,20 +14,20 @@ from models import PlayerStats, TeamStats, Player, Team, Match
 
 class StatsService:
     """Сервис для работы со статистикой"""
-    
+
     def __init__(self):
         """Инициализация сервиса"""
         self.session = get_session()
-    
+
     def get_player_stats(self, player_id, start_date=None, end_date=None):
         """
         Получение статистики игрока
-        
+
         Args:
             player_id (int): ID игрока
             start_date (date, optional): Начальная дата. Defaults to None.
             end_date (date, optional): Конечная дата. Defaults to None.
-            
+
         Returns:
             dict: Статистика игрока
         """
@@ -42,19 +42,19 @@ class StatsService:
                 func.sum(PlayerStats.faceoffs_won).label('faceoffs_won'),
                 func.sum(PlayerStats.faceoffs_total).label('faceoffs_total')
             ).filter(PlayerStats.player_id == player_id)
-            
+
             # Применение фильтров по дате
             if start_date or end_date:
                 query = query.join(Match, PlayerStats.match_id == Match.id)
-                
+
                 if start_date:
                     query = query.filter(Match.date >= start_date)
-                
+
                 if end_date:
                     query = query.filter(Match.date <= end_date)
-            
+
             result = query.first()
-            
+
             # Проверяем, что результат не None
             if result is None:
                 stats = {
@@ -79,12 +79,12 @@ class StatsService:
                     'faceoffs_won': 0 if result.faceoffs_won is None else result.faceoffs_won,
                     'faceoffs_total': 0 if result.faceoffs_total is None else result.faceoffs_total
                 }
-            
+
             # Дополнительные расчеты
             stats['points'] = int(stats['goals'] + stats['assists'])
             stats['faceoff_percentage'] = int((stats['faceoffs_won'] / stats['faceoffs_total'] * 100) if stats['faceoffs_total'] > 0 else 0)
             stats['games'] = self.session.query(func.count(PlayerStats.id)).filter(PlayerStats.player_id == player_id).scalar() or 0
-            
+
             return stats
         except Exception as e:
             print(f"Ошибка при получении статистики игрока: {str(e)}")
@@ -101,16 +101,16 @@ class StatsService:
                 'faceoff_percentage': 0,
                 'games': 0
             }
-    
+
     def get_team_stats(self, team_id, start_date=None, end_date=None):
         """
         Получение статистики команды
-        
+
         Args:
             team_id (int): ID команды
             start_date (date, optional): Начальная дата. Defaults to None.
             end_date (date, optional): Конечная дата. Defaults to None.
-            
+
         Returns:
             dict: Статистика команды
         """
@@ -126,19 +126,19 @@ class StatsService:
                 func.sum(TeamStats.shorthanded_goals_for).label('shorthanded_goals_for'),
                 func.sum(TeamStats.shorthanded_goals_against).label('shorthanded_goals_against')
             ).filter(TeamStats.team_id == team_id)
-            
+
             # Применение фильтров по дате
             if start_date or end_date:
                 query = query.join(Match, TeamStats.match_id == Match.id)
-                
+
                 if start_date:
                     query = query.filter(Match.date >= start_date)
-                
+
                 if end_date:
                     query = query.filter(Match.date <= end_date)
-            
+
             result = query.first()
-            
+
             # Проверяем, что результат не None
             if result is None:
                 stats = {
@@ -165,15 +165,15 @@ class StatsService:
                     'shorthanded_goals_for': 0 if result.shorthanded_goals_for is None else result.shorthanded_goals_for,
                     'shorthanded_goals_against': 0 if result.shorthanded_goals_against is None else result.shorthanded_goals_against
                 }
-            
+
             # Дополнительные расчеты
             stats['powerplay_percentage'] = int((stats['powerplay_goals'] / stats['powerplay_opportunities'] * 100) if stats['powerplay_opportunities'] > 0 else 0)
             stats['games'] = self.get_team_games_count(team_id, start_date, end_date)
-            
+
             # Добавление статистики побед/поражений
             win_loss = self.get_team_win_loss_stats(team_id, start_date, end_date)
             stats.update(win_loss)
-            
+
             return stats
         except Exception as e:
             print(f"Ошибка при получении статистики команды: {str(e)}")
@@ -193,16 +193,16 @@ class StatsService:
                 'shorthanded_goals_for': 0,
                 'shorthanded_goals_against': 0
             }
-    
+
     def get_team_win_loss_stats(self, team_id, start_date=None, end_date=None):
         """
         Получение статистики побед и поражений команды
-        
+
         Args:
             team_id (int): ID команды
             start_date (date, optional): Начальная дата. Defaults to None.
             end_date (date, optional): Конечная дата. Defaults to None.
-            
+
         Returns:
             dict: Статистика побед и поражений
         """
@@ -214,33 +214,33 @@ class StatsService:
                     Match.away_team_id == team_id
                 )
             ).filter(Match.status == "завершен")
-            
+
             # Применение фильтров по дате
             if start_date:
                 query = query.filter(Match.date >= start_date)
-            
+
             if end_date:
                 query = query.filter(Match.date <= end_date)
-            
+
             matches = query.all()
-            
+
             wins = 0
             losses = 0
-            
+
             for match in matches:
                 # Сравниваем результаты, используя SQLAlchemy-безопасный способ
                 is_home = match.home_team_id == team_id
                 is_away = match.away_team_id == team_id
-                
+
                 # Преобразуем объекты SQLAlchemy в обычные Python-объекты для сравнения
                 home_score = match.home_score
                 away_score = match.away_score
-                
+
                 if home_score is not None and away_score is not None:
                     # Преобразуем к int, но предварительно обеспечиваем, что это не SQLAlchemy-объекты
                     home_score_val = int(home_score) if home_score is not None else 0
                     away_score_val = int(away_score) if away_score is not None else 0
-                    
+
                     if is_home:
                         if home_score_val > away_score_val:
                             wins += 1
@@ -251,10 +251,10 @@ class StatsService:
                             wins += 1
                         else:
                             losses += 1
-            
+
             games = wins + losses
             win_percentage = (wins / games * 100) if games > 0 else 0
-            
+
             return {
                 'wins': wins,
                 'losses': losses,
@@ -267,16 +267,16 @@ class StatsService:
                 'losses': 0,
                 'win_percentage': 0
             }
-    
+
     def get_team_games_count(self, team_id, start_date=None, end_date=None):
         """
         Получение количества матчей команды
-        
+
         Args:
             team_id (int): ID команды
             start_date (date, optional): Начальная дата. Defaults to None.
             end_date (date, optional): Конечная дата. Defaults to None.
-            
+
         Returns:
             int: Количество матчей
         """
@@ -287,30 +287,30 @@ class StatsService:
                     Match.away_team_id == team_id
                 )
             ).filter(Match.status == "завершен")
-            
+
             # Применение фильтров по дате
             if start_date:
                 query = query.filter(Match.date >= start_date)
-            
+
             if end_date:
                 query = query.filter(Match.date <= end_date)
-            
+
             return query.scalar() or 0
         except Exception as e:
             print(f"Ошибка при подсчете матчей команды: {str(e)}")
             return 0
-    
+
     def get_top_players(self, team_id=None, category='points', limit=10, start_date=None, end_date=None):
         """
         Получение списка лучших игроков по определенной категории
-        
+
         Args:
             team_id (int, optional): ID команды для фильтрации. Defaults to None.
             category (str, optional): Категория для сортировки. Defaults to 'points'.
             limit (int, optional): Лимит результатов. Defaults to 10.
             start_date (date, optional): Начальная дата. Defaults to None.
             end_date (date, optional): Конечная дата. Defaults to None.
-            
+
         Returns:
             list: Список игроков
         """
@@ -329,7 +329,7 @@ class StatsService:
             else:
                 # По умолчанию используем очки
                 value_query = func.sum(PlayerStats.goals + PlayerStats.assists).label('value')
-            
+
             # Базовый запрос
             query = self.session.query(
                 Player.id.label('player_id'),
@@ -347,26 +347,26 @@ class StatsService:
                 Player.id,
                 Team.name
             )
-            
+
             # Фильтрация по команде
             if team_id:
                 query = query.filter(Player.team_id == team_id)
-            
+
             # Фильтрация по дате
             if start_date or end_date:
                 query = query.join(Match, PlayerStats.match_id == Match.id)
-                
+
                 if start_date:
                     query = query.filter(Match.date >= start_date)
-                
+
                 if end_date:
                     query = query.filter(Match.date <= end_date)
-            
+
             # Сортировка по убыванию и ограничение результатов
             query = query.order_by(desc('value')).limit(limit)
-            
+
             results = query.all()
-            
+
             # Преобразование результатов в список словарей
             players = []
             for result in results:
@@ -380,20 +380,20 @@ class StatsService:
                     'value': result.value or 0
                 }
                 players.append(player)
-            
+
             return players
         except Exception as e:
             print(f"Ошибка при получении лучших игроков: {str(e)}")
             return []
-    
+
     def get_player_match_stats(self, player_id, match_id):
         """
         Получение статистики игрока в конкретном матче
-        
+
         Args:
             player_id (int): ID игрока
             match_id (int): ID матча
-            
+
         Returns:
             PlayerStats: Объект статистики или None, если статистика не найдена
         """
@@ -405,16 +405,16 @@ class StatsService:
         except Exception as e:
             print(f"Ошибка при получении статистики игрока в матче: {str(e)}")
             return None
-    
+
     def update_player_match_stats(self, player_id, match_id, stats_data):
         """
         Обновление статистики игрока в матче
-        
+
         Args:
             player_id (int): ID игрока
             match_id (int): ID матча
             stats_data (dict): Данные статистики
-            
+
         Returns:
             PlayerStats: Обновленная статистика или None в случае ошибки
         """
@@ -424,7 +424,7 @@ class StatsService:
                 PlayerStats.player_id == player_id,
                 PlayerStats.match_id == match_id
             ).first()
-            
+
             if stats:
                 # Обновление существующей статистики
                 stats.goals = stats_data.get('goals', stats.goals)
@@ -450,23 +450,23 @@ class StatsService:
                     faceoffs_total=stats_data.get('faceoffs_total', 0)
                 )
                 self.session.add(stats)
-            
+
             self.session.commit()
-            
+
             return stats
         except Exception as e:
             print(f"Ошибка при обновлении статистики игрока: {str(e)}")
             self.session.rollback()
             return None
-    
+
     def get_team_match_stats(self, team_id, match_id):
         """
         Получение статистики команды в конкретном матче
-        
+
         Args:
             team_id (int): ID команды
             match_id (int): ID матча
-            
+
         Returns:
             TeamStats: Объект статистики или None, если статистика не найдена
         """
@@ -478,16 +478,16 @@ class StatsService:
         except Exception as e:
             print(f"Ошибка при получении статистики команды в матче: {str(e)}")
             return None
-    
+
     def update_team_match_stats(self, team_id, match_id, stats_data):
         """
         Обновление статистики команды в матче
-        
+
         Args:
             team_id (int): ID команды
             match_id (int): ID матча
             stats_data (dict): Данные статистики
-            
+
         Returns:
             TeamStats: Обновленная статистика или None в случае ошибки
         """
@@ -497,7 +497,7 @@ class StatsService:
                 TeamStats.team_id == team_id,
                 TeamStats.match_id == match_id
             ).first()
-            
+
             if stats:
                 # Обновление существующей статистики
                 stats.goals_for = stats_data.get('goals_for', stats.goals_for)
@@ -525,11 +525,188 @@ class StatsService:
                     shorthanded_goals_against=stats_data.get('shorthanded_goals_against', 0)
                 )
                 self.session.add(stats)
-            
+
             self.session.commit()
-            
+
             return stats
         except Exception as e:
             print(f"Ошибка при обновлении статистики команды: {str(e)}")
             self.session.rollback()
             return None
+
+    def get_player_season_stats(self, player_id):
+        """
+        Получение статистики игрока за сезон
+
+        Args:
+            player_id (int): ID игрока
+
+        Returns:
+            dict: Статистика игрока за сезон
+        """
+        return self.get_player_stats(player_id)
+
+    def get_player_match_stats(self, player_id):
+        """
+        Получение статистики игрока по матчам
+
+        Args:
+            player_id (int): ID игрока
+
+        Returns:
+            list: Список статистики по матчам
+        """
+        try:
+            query = self.session.query(
+                PlayerStats,
+                Match.date.label('match_date'),
+                Match.home_team_id,
+                Match.away_team_id,
+                Team.name.label('home_team'),
+                func.lag(Team.name).over(order_by=Match.id).label('away_team')
+            ).join(
+                Match, PlayerStats.match_id == Match.id
+            ).join(
+                Team, Match.home_team_id == Team.id
+            ).filter(
+                PlayerStats.player_id == player_id
+            ).order_by(Match.date.desc())
+
+            results = query.all()
+
+            match_stats = []
+            for result in results:
+                stat = result.PlayerStats
+
+                # Получаем названия команд
+                home_team_query = self.session.query(Team.name).filter(Team.id == result.home_team_id).first()
+                away_team_query = self.session.query(Team.name).filter(Team.id == result.away_team_id).first()
+
+                home_team = home_team_query.name if home_team_query else "Неизвестно"
+                away_team = away_team_query.name if away_team_query else "Неизвестно"
+
+                match_stats.append({
+                    'match_date': result.match_date,
+                    'home_team': home_team,
+                    'away_team': away_team,
+                    'goals': stat.goals or 0,
+                    'assists': stat.assists or 0,
+                    'points': (stat.goals or 0) + (stat.assists or 0),
+                    'plus_minus': stat.plus_minus or 0,
+                    'penalty_minutes': stat.penalty_minutes or 0,
+                    'shots': stat.shots or 0,
+                    'time_on_ice': stat.time_on_ice or 0
+                })
+
+            return match_stats
+        except Exception as e:
+            print(f"Ошибка при получении статистики игрока по матчам: {str(e)}")
+            return []
+
+    def get_team_matches(self, team_id):
+        """
+        Получение матчей команды
+
+        Args:
+            team_id (int): ID команды
+
+        Returns:
+            list: Список матчей
+        """
+        try:
+            matches = self.session.query(Match).filter(
+                or_(
+                    Match.home_team_id == team_id,
+                    Match.away_team_id == team_id
+                )
+            ).filter(Match.status == "завершен").order_by(Match.date.desc()).all()
+
+            result = []
+            for match in matches:
+                # Определяем соперника
+                if match.home_team_id == team_id:
+                    opponent = match.away_team.name if match.away_team else "Неизвестно"
+                    goals_for = match.home_score or 0
+                    goals_against = match.away_score or 0
+                else:
+                    opponent = match.home_team.name if match.home_team else "Неизвестно"
+                    goals_for = match.away_score or 0
+                    goals_against = match.home_score or 0
+
+                # Определяем результат
+                if goals_for > goals_against:
+                    result_str = "Победа"
+                elif goals_for < goals_against:
+                    result_str = "Поражение"
+                else:
+                    result_str = "Ничья"
+
+                result.append({
+                    'date': match.date.strftime('%d.%m.%Y') if match.date else "",
+                    'opponent': opponent,
+                    'score': f"{goals_for}:{goals_against}",
+                    'goals_for': goals_for,
+                    'goals_against': goals_against,
+                    'result': result_str
+                })
+
+            return result
+        except Exception as e:
+            print(f"Ошибка при получении матчей команды: {str(e)}")
+            return []
+
+    def get_team_players_stats(self, team_id):
+        """
+        Получение статистики игроков команды
+
+        Args:
+            team_id (int): ID команды
+
+        Returns:
+            list: Список статистики игроков
+        """
+        try:
+            query = self.session.query(
+                Player.id,
+                Player.first_name,
+                Player.last_name,
+                Player.position,
+                func.count(PlayerStats.id).label('games'),
+                func.sum(PlayerStats.goals).label('goals'),
+                func.sum(PlayerStats.assists).label('assists'),
+                func.sum(PlayerStats.penalty_minutes).label('penalty_minutes'),
+                func.sum(PlayerStats.plus_minus).label('plus_minus'),
+                func.sum(PlayerStats.shots).label('shots')
+            ).join(
+                PlayerStats, Player.id == PlayerStats.player_id, isouter=True
+            ).filter(
+                Player.team_id == team_id
+            ).group_by(
+                Player.id
+            ).order_by(
+                func.sum(PlayerStats.goals + PlayerStats.assists).desc()
+            )
+
+            results = query.all()
+
+            players_stats = []
+            for result in results:
+                goals = result.goals or 0
+                assists = result.assists or 0
+
+                players_stats.append({
+                    'name': f"{result.last_name} {result.first_name}",
+                    'position': result.position or "",
+                    'games': result.games or 0,
+                    'goals': goals,
+                    'assists': assists,
+                    'points': goals + assists,
+                    'plus_minus': result.plus_minus or 0,
+                    'penalty_minutes': result.penalty_minutes or 0,
+                    'shots': result.shots or 0
+                })
+
+            return players_stats
+        except Exception as e:
+            print(f"Ошибка при получении статистики игроков команды: {str(e)}")
+            return []
