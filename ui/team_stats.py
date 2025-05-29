@@ -174,7 +174,12 @@ class TeamStatsWidget(QWidget):
         self.losses_label.setText(str(team_stats.get('losses', 0)))
         self.goals_for_label.setText(str(team_stats.get('goals_for', 0)))
         self.goals_against_label.setText(str(team_stats.get('goals_against', 0)))
-        self.goal_diff_label.setText(str(team_stats.get('goal_diff', 0)))
+        
+        # Расчет разности голов
+        goals_for = team_stats.get('goals_for', 0)
+        goals_against = team_stats.get('goals_against', 0)
+        goal_diff = goals_for - goals_against
+        self.goal_diff_label.setText(str(goal_diff))
         
         # Загрузка результатов матчей
         matches = self.stats_service.get_team_matches(team_id)
@@ -281,22 +286,43 @@ class TeamStatsWidget(QWidget):
         
         # Создание графика, если есть данные
         if team_stats:
-            fig = Figure(figsize=(6, 4), dpi=100)
-            ax = fig.add_subplot(111)
+            wins = team_stats.get('wins', 0)
+            losses = team_stats.get('losses', 0)
             
-            labels = ['Победы', 'Поражения']
-            values = [team_stats.get('wins', 0), team_stats.get('losses', 0)]
-            colors = ['green', 'red']
-            
-            # Отрисовка графика
-            ax.pie(values, labels=labels, colors=colors, autopct='%1.1f%%', startangle=90)
-            ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle
-            
-            fig.tight_layout()
-            
-            # Создание виджета графика
-            canvas = FigureCanvas(fig)
-            layout.addWidget(canvas)
+            # Проверяем, есть ли данные для отображения
+            if wins > 0 or losses > 0:
+                fig = Figure(figsize=(6, 4), dpi=100)
+                ax = fig.add_subplot(111)
+                
+                labels = []
+                values = []
+                colors = []
+                
+                if wins > 0:
+                    labels.append('Победы')
+                    values.append(wins)
+                    colors.append('green')
+                
+                if losses > 0:
+                    labels.append('Поражения')
+                    values.append(losses)
+                    colors.append('red')
+                
+                # Отрисовка графика только если есть данные
+                if values:
+                    ax.pie(values, labels=labels, colors=colors, autopct='%1.1f%%', startangle=90)
+                    ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle
+                    
+                    fig.tight_layout()
+                    
+                    # Создание виджета графика
+                    canvas = FigureCanvas(fig)
+                    layout.addWidget(canvas)
+                else:
+                    layout.addWidget(QLabel("Нет данных для построения графика"))
+            else:
+                # Сообщение об отсутствии данных
+                layout.addWidget(QLabel("Нет данных для построения графика"))
         else:
             # Сообщение об отсутствии данных
             layout.addWidget(QLabel("Нет данных для построения графика"))
