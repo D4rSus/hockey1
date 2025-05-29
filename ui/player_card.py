@@ -128,12 +128,6 @@ class PlayerCardWidget(QWidget):
         # Кнопки действий
         buttons_layout = QHBoxLayout()
         
-        chart_button = QPushButton("Графики")
-        chart_button.clicked.connect(self.show_charts)
-        buttons_layout.addWidget(chart_button)
-        
-        buttons_layout.addStretch()
-        
         add_stats_button = QPushButton("Добавить статистику")
         add_stats_button.clicked.connect(self.add_stats)
         buttons_layout.addWidget(add_stats_button)
@@ -434,14 +428,7 @@ class PlayerCardWidget(QWidget):
         # В будущем здесь будет реализация экспорта в Excel
         QMessageBox.information(self, "Информация", "Функция экспорта статистики будет доступна в следующей версии")
     
-    def show_charts(self):
-        """Отображение графиков со статистикой"""
-        if not self.player:
-            show_error_message(self, "Ошибка", "Сначала выберите игрока")
-            return
-        
-        # В будущем здесь будет реализация отображения графиков
-        QMessageBox.information(self, "Информация", "Функция отображения графиков будет доступна в следующей версии")
+    
     
     def add_video(self):
         """Добавление видеоматериала"""
