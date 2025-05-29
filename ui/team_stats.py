@@ -111,16 +111,20 @@ class TeamStatsWidget(QWidget):
         
         # Создание места для графиков
         self.goals_chart_container = QWidget()
+        self.goals_chart_container.setMinimumSize(400, 300)
         goals_chart_layout = QVBoxLayout(self.goals_chart_container)
         goals_chart_layout.addWidget(QLabel("Динамика голов"))
         self.goals_chart_widget = QWidget()
+        self.goals_chart_widget.setMinimumSize(400, 250)
         goals_chart_layout.addWidget(self.goals_chart_widget)
         charts_layout.addWidget(self.goals_chart_container)
         
         self.results_chart_container = QWidget()
+        self.results_chart_container.setMinimumSize(400, 300)
         results_chart_layout = QVBoxLayout(self.results_chart_container)
         results_chart_layout.addWidget(QLabel("Результаты матчей"))
         self.results_chart_widget = QWidget()
+        self.results_chart_widget.setMinimumSize(400, 250)
         results_chart_layout.addWidget(self.results_chart_widget)
         charts_layout.addWidget(self.results_chart_container)
         
@@ -240,7 +244,11 @@ class TeamStatsWidget(QWidget):
         
         # Создание графика, если есть данные
         if matches:
-            fig = Figure(figsize=(6, 4), dpi=100)
+            # Установка минимальных размеров для предотвращения ошибки
+            width = max(self.goals_chart_widget.width() / 100, 4)
+            height = max(self.goals_chart_widget.height() / 100, 3)
+            
+            fig = Figure(figsize=(width, height), dpi=100)
             ax = fig.add_subplot(111)
             
             dates = [match['date'] for match in matches]
@@ -291,7 +299,11 @@ class TeamStatsWidget(QWidget):
             
             # Проверяем, есть ли данные для отображения
             if wins > 0 or losses > 0:
-                fig = Figure(figsize=(6, 4), dpi=100)
+                # Установка минимальных размеров для предотвращения ошибки
+                width = max(self.results_chart_widget.width() / 100, 4)
+                height = max(self.results_chart_widget.height() / 100, 3)
+                
+                fig = Figure(figsize=(width, height), dpi=100)
                 ax = fig.add_subplot(111)
                 
                 labels = []
