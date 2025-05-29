@@ -6,7 +6,7 @@
 
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QPushButton, 
                            QLabel, QTabWidget, QTableWidget, QTableWidgetItem, 
-                           QHeaderView, QGroupBox, QFormLayout, QFileDialog, QMessageBox)
+                           QHeaderView, QGroupBox, QFormLayout, QFileDialog, QMessageBox, QDialog)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap, QFont
 
@@ -401,8 +401,13 @@ class PlayerCardWidget(QWidget):
             show_error_message(self, "Ошибка", "Сначала выберите игрока")
             return
         
-        # В будущем здесь будет вызов диалога добавления статистики
-        QMessageBox.information(self, "Информация", "Функция добавления статистики будет доступна в следующей версии")
+        from ui.add_stats_dialog import AddStatsDialog
+        
+        dialog = AddStatsDialog(self.player, self)
+        if dialog.exec_() == QDialog.Accepted:
+            # Обновляем отображение статистики после добавления
+            self.load_season_stats()
+            self.load_match_stats()
     
     def edit_stats(self):
         """Редактирование статистики игрока"""

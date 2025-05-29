@@ -12,27 +12,27 @@ from models import Match, Team, PlayerStats, TeamStats, Video
 
 class MatchService:
     """Сервис для работы с матчами"""
-    
+
     def __init__(self):
         """Инициализация сервиса"""
         self.session = get_session()
-    
+
     def get_matches(self, team_id=None, start_date=None, end_date=None, status=None):
         """
         Получение списка матчей с возможностью фильтрации
-        
+
         Args:
             team_id (int, optional): ID команды для фильтрации. Defaults to None.
             start_date (date, optional): Начальная дата. Defaults to None.
             end_date (date, optional): Конечная дата. Defaults to None.
             status (str, optional): Статус матча (запланирован, завершен, отменен). Defaults to None.
-            
+
         Returns:
             list: Список матчей, соответствующих фильтрам
         """
         try:
             query = self.session.query(Match)
-            
+
             # Применение фильтров
             if team_id:
                 query = query.filter(
@@ -41,38 +41,38 @@ class MatchService:
                         Match.away_team_id == team_id
                     )
                 )
-            
+
             if start_date:
                 query = query.filter(Match.date >= start_date)
-            
+
             if end_date:
                 query = query.filter(Match.date <= end_date)
-            
+
             if status:
                 query = query.filter(Match.status == status)
-            
+
             # Сортировка по дате и времени
             query = query.order_by(Match.date, Match.time)
-            
+
             return query.all()
         except Exception as e:
             print(f"Ошибка при получении списка матчей: {str(e)}")
             return []
-    
+
     def get_upcoming_matches(self, days=30):
         """
         Получение списка предстоящих матчей
-        
+
         Args:
             days (int, optional): Количество дней вперед. Defaults to 30.
-            
+
         Returns:
             list: Список предстоящих матчей
         """
         try:
             today = date.today()
             end_date = today + timedelta(days=days)
-            
+
             return self.session.query(Match).filter(
                 and_(
                     Match.date >= today,
@@ -83,21 +83,21 @@ class MatchService:
         except Exception as e:
             print(f"Ошибка при получении предстоящих матчей: {str(e)}")
             return []
-    
+
     def get_past_matches(self, days=30):
         """
         Получение списка прошедших матчей
-        
+
         Args:
             days (int, optional): Количество дней назад. Defaults to 30.
-            
+
         Returns:
             list: Список прошедших матчей
         """
         try:
             today = date.today()
             start_date = today - timedelta(days=days)
-            
+
             return self.session.query(Match).filter(
                 and_(
                     Match.date >= start_date,
@@ -108,14 +108,14 @@ class MatchService:
         except Exception as e:
             print(f"Ошибка при получении прошедших матчей: {str(e)}")
             return []
-    
+
     def get_match_by_id(self, match_id):
         """
         Получение матча по ID
-        
+
         Args:
             match_id (int): ID матча
-            
+
         Returns:
             Match: Объект матча или None, если матч не найден
         """
@@ -124,57 +124,55 @@ class MatchService:
         except Exception as e:
             print(f"Ошибка при получении матча: {str(e)}")
             return None
-    
+
     def create_match(self, match_data):
         """
         Создание нового матча
-        
+
         Args:
             match_data (dict): Данные матча
-            
+
         Returns:
-            Match: Созданный матч или None в случае ошибки
+            int: ID созданного матча или None в случае ошибки
         """
         try:
-            # Создание нового матча
             match = Match(
-                date=match_data.get('date'),
-                time=match_data.get('time'),
-                home_team_id=match_data.get('home_team_id'),
-                away_team_id=match_data.get('away_team_id'),
+                date=match_data['date'],
+                home_team_id=match_data['home_team_id'],
+                away_team_id=match_data['away_team_id'],
+                status=match_data.get('status', 'запланирован'),
                 location=match_data.get('location'),
-                status=match_data.get('status', "запланирован"),
+                time=match_data.get('time'),
                 notes=match_data.get('notes')
             )
-            
-            # Сохранение матча
+
             self.session.add(match)
             self.session.commit()
-            
-            return match
+
+            return match.id
         except Exception as e:
             print(f"Ошибка при создании матча: {str(e)}")
             self.session.rollback()
             return None
-    
+
     def update_match(self, match_id, match_data):
         """
         Обновление данных матча
-        
+
         Args:
             match_id (int): ID матча
             match_data (dict): Новые данные матча
-            
+
         Returns:
             Match: Обновленный матч или None в случае ошибки
         """
         try:
             # Поиск матча
             match = self.session.query(Match).filter(Match.id == match_id).first()
-            
+
             if not match:
                 return None
-            
+
             # Обновление данных
             match.date = match_data.get('date', match.date)
             match.time = match_data.get('time', match.time)
@@ -186,94 +184,94 @@ class MatchService:
             match.status = match_data.get('status', match.status)
             match.notes = match_data.get('notes', match.notes)
             match.video_path = match_data.get('video_path', match.video_path)
-            
+
             self.session.commit()
-            
+
             return match
         except Exception as e:
             print(f"Ошибка при обновлении матча: {str(e)}")
             self.session.rollback()
             return None
-    
+
     def delete_match(self, match_id):
         """
         Удаление матча
-        
+
         Args:
             match_id (int): ID матча
-            
+
         Returns:
             bool: True при успешном удалении, False в противном случае
         """
         try:
             # Поиск матча
             match = self.session.query(Match).filter(Match.id == match_id).first()
-            
+
             if not match:
                 return False
-            
+
             # Удаление связанных записей статистики игроков
             self.session.query(PlayerStats).filter(PlayerStats.match_id == match_id).delete()
-            
+
             # Удаление связанных записей статистики команд
             self.session.query(TeamStats).filter(TeamStats.match_id == match_id).delete()
-            
+
             # Удаление матча
             self.session.delete(match)
             self.session.commit()
-            
+
             return True
         except Exception as e:
             print(f"Ошибка при удалении матча: {str(e)}")
             self.session.rollback()
             return False
-    
+
     def update_match_result(self, match_id, home_score, away_score, status="завершен"):
         """
         Обновление результата матча
-        
+
         Args:
             match_id (int): ID матча
             home_score (int): Счет домашней команды
             away_score (int): Счет гостевой команды
             status (str, optional): Статус матча. Defaults to "завершен".
-            
+
         Returns:
             Match: Обновленный матч или None в случае ошибки
         """
         try:
             # Поиск матча
             match = self.session.query(Match).filter(Match.id == match_id).first()
-            
+
             if not match:
                 return None
-            
+
             # Обновление результата
             match.home_score = home_score
             match.away_score = away_score
             match.status = status
-            
+
             self.session.commit()
-            
+
             return match
         except Exception as e:
             print(f"Ошибка при обновлении результата матча: {str(e)}")
             self.session.rollback()
             return None
-    
+
     def get_match_videos(self, match_id):
         """
         Получение видеоматериалов, связанных с матчем
-        
+
         Args:
             match_id (int): ID матча
-            
+
         Returns:
             list: Список видеоматериалов
         """
         try:
             videos = self.session.query(Video).filter(Video.match_id == match_id).all()
-            
+
             result = []
             for video in videos:
                 result.append({
@@ -283,25 +281,25 @@ class MatchService:
                     'uploaded_at': video.uploaded_at,
                     'description': video.description
                 })
-            
+
             return result
         except Exception as e:
             print(f"Ошибка при получении видеоматериалов: {str(e)}")
             return []
-    
+
     def get_match_count(self, team_id=None):
         """
         Получение количества матчей
-        
+
         Args:
             team_id (int, optional): ID команды для фильтрации. Defaults to None.
-            
+
         Returns:
             int: Количество матчей
         """
         try:
             query = self.session.query(func.count(Match.id))
-            
+
             if team_id:
                 query = query.filter(
                     or_(
@@ -309,19 +307,19 @@ class MatchService:
                         Match.away_team_id == team_id
                     )
                 )
-            
+
             return query.scalar() or 0
         except Exception as e:
             print(f"Ошибка при подсчете матчей: {str(e)}")
             return 0
-    
+
     def get_team_record(self, team_id):
         """
         Получение статистики побед/поражений команды
-        
+
         Args:
             team_id (int): ID команды
-            
+
         Returns:
             dict: Статистика побед/поражений
         """
@@ -334,10 +332,10 @@ class MatchService:
                 ),
                 Match.status == "завершен"
             ).all()
-            
+
             wins = 0
             losses = 0
-            
+
             for match in matches:
                 if match.home_team_id == team_id:
                     if match.home_score > match.away_score:
@@ -349,7 +347,7 @@ class MatchService:
                         wins += 1
                     else:
                         losses += 1
-            
+
             return {
                 'wins': wins,
                 'losses': losses,
@@ -364,25 +362,25 @@ class MatchService:
                 'total': 0,
                 'win_percentage': 0
             }
-    
+
     def add_match_video(self, match_id, video_data):
         """
         Добавление видео к матчу
-        
+
         Args:
             match_id (int): ID матча
             video_data (dict): Данные видео
-            
+
         Returns:
             Video: Созданное видео или None в случае ошибки
         """
         try:
             # Поиск матча
             match = self.session.query(Match).filter(Match.id == match_id).first()
-            
+
             if not match:
                 return None
-            
+
             # Создание видео
             video = Video(
                 title=video_data.get('title'),
@@ -392,13 +390,59 @@ class MatchService:
                 type="матч",
                 match_id=match_id
             )
-            
+
             # Сохранение видео
             self.session.add(video)
             self.session.commit()
-            
+
             return video
         except Exception as e:
             print(f"Ошибка при добавлении видео к матчу: {str(e)}")
             self.session.rollback()
             return None
+
+    def get_team_matches(self, team_id, limit=None):
+        """
+        Получение матчей команды
+
+        Args:
+            team_id (int): ID команды
+            limit (int, optional): Лимит количества матчей
+
+        Returns:
+            list: Список матчей
+        """
+        try:
+            from sqlalchemy import or_, desc
+
+            query = self.session.query(Match).filter(
+                or_(
+                    Match.home_team_id == team_id,
+                    Match.away_team_id == team_id
+                )
+            ).order_by(desc(Match.date))
+
+            if limit:
+                query = query.limit(limit)
+
+            matches = query.all()
+
+            result = []
+            for match in matches:
+                # Определяем соперника
+                if match.home_team_id == team_id:
+                    opponent_team = match.away_team
+                else:
+                    opponent_team = match.home_team
+
+                result.append({
+                    'match_id': match.id,
+                    'date': match.date.strftime('%d.%m.%Y') if match.date else '',
+                    'opponent': opponent_team.name if opponent_team else 'Неизвестно',
+                    'status': match.status
+                })
+
+            return result
+        except Exception as e:
+            print(f"Ошибка при получении матчей команды: {str(e)}")
+            return []
