@@ -246,7 +246,15 @@ class PlayerCardWidget(QWidget):
             self.player_name_label.setText(full_name)
             
             self.birth_date_label.setText(format_date(player.birth_date) if player.birth_date else "Не указана")
-            self.age_label.setText(str(player.age()) if player.birth_date else "Неизвестно")
+            # Обработка возраста - может быть методом или свойством
+            try:
+                if hasattr(player, 'age') and callable(player.age):
+                    age_text = str(player.age()) if player.birth_date else "Неизвестно"
+                else:
+                    age_text = str(player.age) if hasattr(player, 'age') and player.age is not None else "Неизвестно"
+            except:
+                age_text = "Неизвестно"
+            self.age_label.setText(age_text)
             self.position_label.setText(player.position)
             self.team_label.setText(player.team.name if player.team else "Не указана")
             self.jersey_number_label.setText(str(player.jersey_number) if player.jersey_number else "Нет")

@@ -16,7 +16,7 @@ from database import Base
 class User(Base):
     """Модель пользователя (тренера)"""
     __tablename__ = 'users'
-    
+
     id = Column(Integer, primary_key=True)
     username = Column(String(50), unique=True, nullable=False)
     password_hash = Column(String(256), nullable=False)
@@ -26,11 +26,11 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.datetime.now)
     last_login = Column(DateTime)
     is_admin = Column(Boolean, default=False)
-    
+
     def set_password(self, password):
         """Установка пароля пользователя"""
         self.password_hash = generate_password_hash(password)
-    
+
     def check_password(self, password):
         """Проверка пароля пользователя"""
         return check_password_hash(self.password_hash, password)
@@ -38,7 +38,7 @@ class User(Base):
 class Team(Base):
     """Модель команды"""
     __tablename__ = 'teams'
-    
+
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)
     logo_path = Column(String(200))
@@ -47,7 +47,7 @@ class Team(Base):
     home_arena = Column(String(100))
     coach_id = Column(Integer, ForeignKey('users.id'))
     is_opponent = Column(Boolean, default=False)
-    
+
     # Отношения
     coach = relationship("User", foreign_keys=[coach_id])
     players = relationship("Player", back_populates="team")
@@ -59,7 +59,7 @@ class Team(Base):
 class Player(Base):
     """Модель игрока"""
     __tablename__ = 'players'
-    
+
     id = Column(Integer, primary_key=True)
     first_name = Column(String(50), nullable=False)
     last_name = Column(String(50), nullable=False)
@@ -73,19 +73,19 @@ class Player(Base):
     team_id = Column(Integer, ForeignKey('teams.id'))
     is_active = Column(Boolean, default=True)
     notes = Column(Text)
-    
+
     # Отношения
     team = relationship("Team", back_populates="players")
     stats = relationship("PlayerStats", back_populates="player")
     attendances = relationship("Attendance", back_populates="player")
-    
+
     @hybrid_property
     def full_name(self):
         """Полное имя игрока"""
         if self.middle_name:
             return f"{self.last_name} {self.first_name} {self.middle_name}"
         return f"{self.last_name} {self.first_name}"
-    
+
     @hybrid_property
     def age(self):
         """Возраст игрока"""
@@ -97,7 +97,7 @@ class Player(Base):
 class PlayerStats(Base):
     """Модель статистики игрока"""
     __tablename__ = 'player_stats'
-    
+
     id = Column(Integer, primary_key=True)
     player_id = Column(Integer, ForeignKey('players.id'), nullable=False)
     match_id = Column(Integer, ForeignKey('matches.id'))
@@ -109,16 +109,16 @@ class PlayerStats(Base):
     time_on_ice = Column(Integer, default=0)  # в секундах
     faceoffs_won = Column(Integer, default=0)
     faceoffs_total = Column(Integer, default=0)
-    
+
     # Отношения
     player = relationship("Player", back_populates="stats")
     match = relationship("Match", back_populates="player_stats")
-    
+
     @hybrid_property
     def points(self):
         """Сумма очков (гол + пас)"""
         return self.goals + self.assists
-    
+
     @hybrid_property
     def faceoff_percentage(self):
         """Процент выигранных вбрасываний"""
@@ -129,7 +129,7 @@ class PlayerStats(Base):
 class TeamStats(Base):
     """Модель статистики команды"""
     __tablename__ = 'team_stats'
-    
+
     id = Column(Integer, primary_key=True)
     team_id = Column(Integer, ForeignKey('teams.id'), nullable=False)
     match_id = Column(Integer, ForeignKey('matches.id'))
@@ -142,11 +142,11 @@ class TeamStats(Base):
     powerplay_opportunities = Column(Integer, default=0)
     shorthanded_goals_for = Column(Integer, default=0)
     shorthanded_goals_against = Column(Integer, default=0)
-    
+
     # Отношения
     team = relationship("Team", back_populates="stats")
     match = relationship("Match", back_populates="team_stats")
-    
+
     @hybrid_property
     def powerplay_percentage(self):
         """Процент реализации большинства"""
@@ -157,7 +157,7 @@ class TeamStats(Base):
 class Match(Base):
     """Модель матча"""
     __tablename__ = 'matches'
-    
+
     id = Column(Integer, primary_key=True)
     date = Column(Date, nullable=False)
     time = Column(Time)
@@ -169,13 +169,13 @@ class Match(Base):
     status = Column(String(20), default="запланирован")  # запланирован, завершен, отменен
     notes = Column(Text)
     video_path = Column(String(200))
-    
+
     # Отношения
     home_team = relationship("Team", foreign_keys=[home_team_id], back_populates="home_matches")
     away_team = relationship("Team", foreign_keys=[away_team_id], back_populates="away_matches")
     player_stats = relationship("PlayerStats", back_populates="match")
     team_stats = relationship("TeamStats", back_populates="match")
-    
+
     @hybrid_property
     def is_completed(self):
         """Проверка, завершен ли матч"""
@@ -184,7 +184,7 @@ class Match(Base):
 class Training(Base):
     """Модель тренировки"""
     __tablename__ = 'trainings'
-    
+
     id = Column(Integer, primary_key=True)
     date = Column(Date, nullable=False)
     start_time = Column(Time, nullable=False)
@@ -194,7 +194,7 @@ class Training(Base):
     description = Column(Text)
     focus_area = Column(String(100))  # физическая подготовка, тактика, и т.д.
     video_path = Column(String(200))
-    
+
     # Отношения
     team = relationship("Team", back_populates="trainings")
     attendances = relationship("Attendance", back_populates="training")
@@ -203,27 +203,27 @@ class Training(Base):
 class TrainingExercise(Base):
     """Модель упражнения для тренировки"""
     __tablename__ = 'training_exercises'
-    
+
     id = Column(Integer, primary_key=True)
     training_id = Column(Integer, ForeignKey('trainings.id'), nullable=False)
     name = Column(String(100), nullable=False)
     description = Column(Text)
     duration = Column(Integer)  # в минутах
     order = Column(Integer)  # порядок упражнения в тренировке
-    
+
     # Отношения
     training = relationship("Training", back_populates="exercises")
 
 class Attendance(Base):
     """Модель посещаемости"""
     __tablename__ = 'attendances'
-    
+
     id = Column(Integer, primary_key=True)
     player_id = Column(Integer, ForeignKey('players.id'), nullable=False)
     training_id = Column(Integer, ForeignKey('trainings.id'), nullable=False)
     is_present = Column(Boolean, default=False)
     reason = Column(String(200))  # причина отсутствия
-    
+
     # Отношения
     player = relationship("Player", back_populates="attendances")
     training = relationship("Training", back_populates="attendances")
@@ -231,26 +231,26 @@ class Attendance(Base):
 class Tournament(Base):
     """Модель турнира"""
     __tablename__ = 'tournaments'
-    
+
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)
     start_date = Column(Date, nullable=False)
     end_date = Column(Date, nullable=False)
     location = Column(String(100))
     description = Column(Text)
-    
+
     # Отношения
     participants = relationship("TournamentTeam", back_populates="tournament")
 
 class TournamentTeam(Base):
     """Модель связи турнира и команды"""
     __tablename__ = 'tournament_teams'
-    
+
     id = Column(Integer, primary_key=True)
     tournament_id = Column(Integer, ForeignKey('tournaments.id'), nullable=False)
     team_id = Column(Integer, ForeignKey('teams.id'), nullable=False)
     rank = Column(Integer)  # место в турнире
-    
+
     # Отношения
     tournament = relationship("Tournament", back_populates="participants")
     team = relationship("Team")
@@ -258,7 +258,7 @@ class TournamentTeam(Base):
 class Video(Base):
     """Модель видеоматериала"""
     __tablename__ = 'videos'
-    
+
     id = Column(Integer, primary_key=True)
     title = Column(String(100), nullable=False)
     file_path = Column(String(200), nullable=False)
@@ -267,7 +267,7 @@ class Video(Base):
     type = Column(String(20))  # тренировка, матч, анализ
     match_id = Column(Integer, ForeignKey('matches.id'))
     training_id = Column(Integer, ForeignKey('trainings.id'))
-    
+
     # Отношения
     match = relationship("Match")
     training = relationship("Training")
