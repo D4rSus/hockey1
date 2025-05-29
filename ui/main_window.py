@@ -208,7 +208,7 @@ class MainWindow(QMainWindow):
         # Создание вкладок
         self.tab_widget = QTabWidget()
 
-        # Инициализация всех виджетов перед использованием
+        # Создание виджетов для вкладок
         self.team_roster_widget = TeamRosterWidget()
         self.player_card_widget = PlayerCardWidget()
         self.team_stats_widget = TeamStatsWidget()
@@ -216,6 +216,9 @@ class MainWindow(QMainWindow):
         self.match_schedule_widget = MatchScheduleWidget()
         self.training_plan_widget = TrainingPlanWidget()
         self.tournament_teams_widget = TournamentTeamsWidget()
+
+        # Подключение сигнала выбора игрока к карточке игрока
+        self.team_roster_widget.player_selected.connect(self.player_card_widget.load_player)
 
         # Добавление вкладок
         self.tab_widget.addTab(self.team_roster_widget, "Состав команды")
@@ -229,5 +232,5 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(self.tab_widget)
 
         # Установка связей между виджетами
-        self.team_roster_widget.player_selected.connect(self.player_card_widget.load_player)
+        
         self.tab_widget.currentChanged.connect(self.on_tab_changed)
