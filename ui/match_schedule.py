@@ -32,6 +32,7 @@ class MatchScheduleWidget(QWidget):
         
         self.init_ui()
         self.load_teams()
+        self.load_matches()  # Загружаем матчи при инициализации
     
     def init_ui(self):
         """Инициализация интерфейса"""
@@ -150,12 +151,16 @@ class MatchScheduleWidget(QWidget):
     
     def load_matches(self):
         """Загрузка списка матчей с учетом фильтров"""
-        team_id = self.team_combo.currentData()
-        status = self.status_combo.currentData()
-        start_date = self.start_date_edit.date().toPyDate()
-        end_date = self.end_date_edit.date().toPyDate()
-        
-        matches = self.match_service.get_matches(team_id, status, start_date, end_date)
+        try:
+            team_id = self.team_combo.currentData()
+            status = self.status_combo.currentData()
+            start_date = self.start_date_edit.date().toPyDate()
+            end_date = self.end_date_edit.date().toPyDate()
+            
+            matches = self.match_service.get_matches(team_id, status, start_date, end_date)
+        except Exception as e:
+            print(f"Ошибка при загрузке матчей: {str(e)}")
+            matches = []
         
         self.matches_table.setRowCount(0)
         for row, match in enumerate(matches):
