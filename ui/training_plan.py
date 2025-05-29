@@ -121,6 +121,10 @@ class TrainingPlanWidget(QWidget):
         
         layout.addLayout(main_layout)
         
+        # Устанавливаем начальные сообщения
+        self.training_info.setText("Выберите тренировку из списка слева для просмотра плана")
+        self.exercise_description.setText("Выберите упражнение из списка для просмотра описания")
+        
         # Загрузка списка тренировок
         self.load_trainings()
         
@@ -130,17 +134,38 @@ class TrainingPlanWidget(QWidget):
     def load_trainings(self):
         """Загрузка списка тренировок"""
         self.trainings_list.clear()
-        trainings = self.training_service.get_upcoming_trainings()
         
-        for training in trainings:
-            date_str = training.date.strftime("%d.%m.%Y")
-            time_str = training.start_time.strftime("%H:%M") if training.start_time else ""
-            team_name = training.team.name if training.team else ""
+        try:
+            trainings = self.training_service.get_upcoming_trainings()
             
-            item_text = f"{date_str} {time_str} - {team_name}"
-            item = QListWidgetItem(item_text)
-            item.setData(Qt.UserRole, training)
+            if not trainings:
+                # Добавляем информационное сообщение, если тренировок нет
+                item = QListWidgetItem("Нет предстоящих тренировок")
+                item.setData(Qt.UserRole, None)
+                item.setFlags(item.flags() & ~Qt.ItemIsSelectable)  # Делаем элемент невыбираемым
+                self.trainings_list.addItem(item)
+                return
             
+            for training in trainings:
+                try:
+                    date_str = training.date.strftime("%d.%m.%Y") if training.date else "Без даты"
+                    time_str = training.start_time.strftime("%H:%M") if training.start_time else "Без времени"
+                    team_name = training.team.name if training.team else "Без команды"
+                    
+                    item_text = f"{date_str} {time_str} - {team_name}"
+                    item = QListWidgetItem(item_text)
+                    item.setData(Qt.UserRole, training)
+                    
+                    self.trainings_list.addItem(item)
+                except Exception as e:
+                    print(f"Ошибка при обработке тренировки {training.id}: {str(e)}")
+                    continue
+                    
+        except Exception as e:
+            print(f"Ошибка при загрузке тренировок: {str(e)}")
+            item = QListWidgetItem("Ошибка загрузки тренировок")
+            item.setData(Qt.UserRole, None)
+            item.setFlags(item.flags() & ~Qt.ItemIsSelectable)
             self.trainings_list.addItem(item)
     
     def on_training_selected(self, current, previous):
@@ -156,23 +181,38 @@ class TrainingPlanWidget(QWidget):
         # Получаем выбранную тренировку
         self.current_training = current.data(Qt.UserRole)
         
+        if not self.current_training:
+            self.training_info.setText("Ошибка: данные тренировки не найдены")
+            self.exercises_table.setRowCount(0)
+            self.exercise_description.clear()
+            self.disable_exercise_buttons()
+            return
+        
         # Отображаем информацию о тренировке
-        date_str = self.current_training.date.strftime("%d.%m.%Y") if self.current_training.date else ""
-        time_str = ""
+        date_str = self.current_training.date.strftime("%d.%m.%Y") if self.current_training.date else "Не указана"
+        
+        time_str = "Не указано"
         if self.current_training.start_time and self.current_training.end_time:
             start = self.current_training.start_time.strftime("%H:%M")
             end = self.current_training.end_time.strftime("%H:%M")
             time_str = f"{start} - {end}"
+        elif self.current_training.start_time:
+            start = self.current_training.start_time.strftime("%H:%M")
+            time_str = f"с {start}"
         
-        team_name = self.current_training.team.name if self.current_training.team else ""
-        location = self.current_training.location or ""
-        focus_area = self.current_training.focus_area or ""
+        team_name = self.current_training.team.name if self.current_training.team else "Не назначена"
+        location = self.current_training.location or "Не указано"
+        focus_area = self.current_training.focus_area or "Не указано"
+        description = self.current_training.description or ""
         
         info_text = f"<b>Дата:</b> {date_str}<br>" \
                     f"<b>Время:</b> {time_str}<br>" \
                     f"<b>Команда:</b> {team_name}<br>" \
                     f"<b>Место:</b> {location}<br>" \
                     f"<b>Направление:</b> {focus_area}"
+        
+        if description:
+            info_text += f"<br><b>Описание:</b> {description}"
                     
         self.training_info.setText(info_text)
         
@@ -187,22 +227,32 @@ class TrainingPlanWidget(QWidget):
         if not self.current_training:
             return
         
-        # Получаем список упражнений
-        exercises = self.training_service.get_training_exercises(self.current_training.id)
-        
-        # Очищаем таблицу
-        self.exercises_table.setRowCount(0)
-        
-        # Заполняем таблицу
-        for row, exercise in enumerate(exercises):
-            self.exercises_table.insertRow(row)
+        try:
+            # Получаем список упражнений
+            exercises = self.training_service.get_training_exercises(self.current_training.id)
             
-            self.exercises_table.setItem(row, 0, QTableWidgetItem(str(exercise.id)))
-            self.exercises_table.setItem(row, 1, QTableWidgetItem(str(exercise.order)))
-            self.exercises_table.setItem(row, 2, QTableWidgetItem(exercise.name))
+            # Очищаем таблицу
+            self.exercises_table.setRowCount(0)
             
-            duration = str(exercise.duration) if exercise.duration else ""
-            self.exercises_table.setItem(row, 3, QTableWidgetItem(duration))
+            if not exercises:
+                # Если упражнений нет, отображаем сообщение
+                self.exercise_description.setText("Упражнения для этой тренировки пока не добавлены.\nИспользуйте кнопку 'Добавить упражнение' для создания плана тренировки.")
+                return
+            
+            # Заполняем таблицу
+            for row, exercise in enumerate(exercises):
+                self.exercises_table.insertRow(row)
+                
+                self.exercises_table.setItem(row, 0, QTableWidgetItem(str(exercise.id)))
+                self.exercises_table.setItem(row, 1, QTableWidgetItem(str(exercise.order)))
+                self.exercises_table.setItem(row, 2, QTableWidgetItem(exercise.name or "Без названия"))
+                
+                duration = str(exercise.duration) if exercise.duration else ""
+                self.exercises_table.setItem(row, 3, QTableWidgetItem(duration))
+                
+        except Exception as e:
+            print(f"Ошибка при загрузке упражнений: {str(e)}")
+            self.exercise_description.setText(f"Ошибка при загрузке упражнений: {str(e)}")
     
     def on_exercise_selected(self, current, previous):
         """Обработчик выбора упражнения из таблицы"""
