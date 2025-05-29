@@ -878,7 +878,7 @@ class AddTeamToTournamentDialog(QDialog):
         layout = QFormLayout(self)
 
         # Выбор команды
-        self.team_combo = QComboBox()Исправлено название метода с `update_match_results` на `update_match_result`.
+        self.team_combo = QComboBox()
         self.load_teams()
         layout.addRow("Команда:", self.team_combo)
 
