@@ -21,6 +21,7 @@ from services.stats_service import StatsService
 from services.team_service import TeamService
 from utils import (show_error_message, show_info_message, 
                   export_to_excel, generate_chart)
+from ui.player_comparison_dialog import PlayerComparisonDialog
 
 class TeamStatsWidget(QWidget):
     """Виджет для отображения статистики команды"""
@@ -340,16 +341,15 @@ class TeamStatsWidget(QWidget):
             layout.addWidget(QLabel("Нет данных для построения графика"))
     
     def compare_players(self):
-        """Сравнение выбранных игроков"""
-        # Получение выбранных строк
-        selected_rows = self.players_table.selectedItems()
-        
-        if not selected_rows or len(set(item.row() for item in selected_rows)) < 2:
-            show_error_message(self, "Ошибка", "Выберите хотя бы двух игроков для сравнения")
+        """Сравнение игроков команды"""
+        team_id = self.team_combo.currentData()
+        if not team_id:
+            show_error_message(self, "Ошибка", "Сначала выберите команду")
             return
         
-        # В будущем здесь будет вызов диалога сравнения игроков
-        QMessageBox.information(self, "Информация", "Функция сравнения игроков будет доступна в следующей версии")
+        # Открытие диалога сравнения игроков
+        dialog = PlayerComparisonDialog(team_id, self)
+        dialog.exec_()
     
     def export_to_excel(self):
         """Экспорт статистики в Excel"""
