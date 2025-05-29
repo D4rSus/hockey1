@@ -269,14 +269,6 @@ class TeamRosterWidget(QWidget):
         add_team_button.clicked.connect(self.add_team)
         filter_layout.addWidget(add_team_button)
         
-        basic_team_button = QPushButton("Базовое создание команды")
-        basic_team_button.clicked.connect(self.basic_add_team)
-        filter_layout.addWidget(basic_team_button)
-        
-        quick_team_button = QPushButton("Быстрое создание команды")
-        quick_team_button.clicked.connect(self.quick_add_team)
-        filter_layout.addWidget(quick_team_button)
-        
         # Кнопки действий с игроками
         add_button = QPushButton("Добавить игрока")
         add_button.clicked.connect(self.add_player)
@@ -419,25 +411,7 @@ class TeamRosterWidget(QWidget):
             self.load_players()
             show_info_message(self, "Информация", "Команда успешно добавлена")
     
-    def basic_add_team(self):
-        """Базовое добавление команды (название, год основания, описание)"""
-        dialog = TeamDialog(create_mode="basic", parent=self)
-        result = dialog.exec_()
-        
-        if result == QDialog.Accepted:
-            self.load_teams()
-            self.load_players()
-            show_info_message(self, "Информация", "Команда успешно добавлена")
     
-    def quick_add_team(self):
-        """Быстрое добавление команды (только название)"""
-        dialog = TeamDialog(create_mode="quick", parent=self)
-        result = dialog.exec_()
-        
-        if result == QDialog.Accepted:
-            self.load_teams()
-            self.load_players()
-            show_info_message(self, "Информация", "Команда успешно добавлена")
     
     def on_player_selected(self):
         """Обработчик выбора игрока в таблице"""
