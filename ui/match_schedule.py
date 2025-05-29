@@ -141,13 +141,18 @@ class MatchScheduleWidget(QWidget):
     
     def load_teams(self):
         """Загрузка списка команд"""
-        teams = self.team_service.get_all_teams()
-        
-        self.team_combo.clear()
-        self.team_combo.addItem("Все команды", None)
-        
-        for team in teams:
-            self.team_combo.addItem(team.name, team.id)
+        try:
+            teams = self.team_service.get_all_teams()
+            print(f"Загружено команд: {len(teams)}")
+            
+            self.team_combo.clear()
+            self.team_combo.addItem("Все команды", None)
+            
+            for team in teams:
+                self.team_combo.addItem(team.name, team.id)
+                
+        except Exception as e:
+            print(f"Ошибка при загрузке команд: {str(e)}")
     
     def load_matches(self):
         """Загрузка списка матчей с учетом фильтров"""
@@ -157,35 +162,50 @@ class MatchScheduleWidget(QWidget):
             start_date = self.start_date_edit.date().toPyDate()
             end_date = self.end_date_edit.date().toPyDate()
             
-            matches = self.match_service.get_matches(team_id, status, start_date, end_date)
+            matches = self.match_service.get_matches(
+                team_id=team_id, 
+                start_date=start_date, 
+                end_date=end_date, 
+                status=status
+            )
+            print(f"Загружено матчей: {len(matches)}")
         except Exception as e:
             print(f"Ошибка при загрузке матчей: {str(e)}")
             matches = []
         
         self.matches_table.setRowCount(0)
+        
+        if not matches:
+            print("Нет матчей для отображения")
+            return
+            
         for row, match in enumerate(matches):
             self.matches_table.insertRow(row)
             
-            self.matches_table.setItem(row, 0, QTableWidgetItem(str(match.id)))
-            self.matches_table.setItem(row, 1, QTableWidgetItem(format_date(match.date)))
-            
-            time_str = format_time(match.time) if match.time else ""
-            self.matches_table.setItem(row, 2, QTableWidgetItem(time_str))
-            
-            home_team = match.home_team.name if match.home_team else ""
-            self.matches_table.setItem(row, 3, QTableWidgetItem(home_team))
-            
-            away_team = match.away_team.name if match.away_team else ""
-            self.matches_table.setItem(row, 4, QTableWidgetItem(away_team))
-            
-            # Счет
-            score = ""
-            if match.home_score is not None and match.away_score is not None:
-                score = f"{match.home_score} - {match.away_score}"
-            self.matches_table.setItem(row, 5, QTableWidgetItem(score))
-            
-            self.matches_table.setItem(row, 6, QTableWidgetItem(match.location or ""))
-            self.matches_table.setItem(row, 7, QTableWidgetItem(match.status or ""))
+            try:
+                self.matches_table.setItem(row, 0, QTableWidgetItem(str(match.id)))
+                self.matches_table.setItem(row, 1, QTableWidgetItem(format_date(match.date)))
+                
+                time_str = format_time(match.time) if match.time else ""
+                self.matches_table.setItem(row, 2, QTableWidgetItem(time_str))
+                
+                home_team = match.home_team.name if match.home_team else ""
+                self.matches_table.setItem(row, 3, QTableWidgetItem(home_team))
+                
+                away_team = match.away_team.name if match.away_team else ""
+                self.matches_table.setItem(row, 4, QTableWidgetItem(away_team))
+                
+                # Счет
+                score = ""
+                if match.home_score is not None and match.away_score is not None:
+                    score = f"{match.home_score} - {match.away_score}"
+                self.matches_table.setItem(row, 5, QTableWidgetItem(score))
+                
+                self.matches_table.setItem(row, 6, QTableWidgetItem(match.location or ""))
+                self.matches_table.setItem(row, 7, QTableWidgetItem(match.status or ""))
+            except Exception as e:
+                print(f"Ошибка при отображении матча {match.id}: {str(e)}")
+                continue
             
             # Выделение прошедших и будущих матчей разным цветом
             if match.status == "завершен":
